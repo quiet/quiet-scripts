@@ -131,19 +131,19 @@ if [ ! -d "$SRCPATH/libcomplex" ]; then
     fi
 fi
 
-if [ ! -d "$SRCPATH/libfec" ]; then
+if [ ! -d "$SRCPATH/libcorrect" ]; then
     echo
-    echo "Enter the path of the source for libfec if present, or leave blank"
+    echo "Enter the path of the source for libcorrect if present, or leave blank"
     echo "to have $SCRIPTNAME download it"
     echo
-    echo -n "libfec: "
+    echo -n "libcorrect: "
     read -e FEC
     if [ -z "$FEC" ]; then
-        echo "Cloning https://github.com/quiet/libfec.git"
-        git clone https://github.com/quiet/libfec.git "$SRCPATH/libfec"
+        echo "Cloning https://github.com/quiet/libcorrect.git"
+        git clone https://github.com/quiet/libcorrect.git "$SRCPATH/libcorrect"
     else
         ABSFEC=`cd "$FEC"; pwd`
-        ln -s "$ABSFEC" "$SRCPATH/libfec"
+        ln -s "$ABSFEC" "$SRCPATH/libcorrect"
     fi
 fi
 
@@ -302,13 +302,11 @@ while (( "$#" )); do
     CFLAGS="--prefix=$SYSROOT/usr -fpic $cflags" LDFLAGS="$ldflags" make
     make install
 
-    rm -rf "$BUILDPATH/$toolchainname/libfec"
-    cp -LR "$SRCPATH/libfec" "$BUILDPATH/$toolchainname/libfec"
-    cd "$BUILDPATH/$toolchainname/libfec"
-    make clean
-    CFLAGS="-fpic $cflags" LDFLAGS="$ldflags" ./configure --host="$triple" --disable-shared --prefix="$SYSROOT/usr" --includedir="$SYSROOT/usr/include"
-    make
-    make install
+    rm -rf "$BUILDPATH/$toolchainname/libcorrect"
+    cp -LR "$SRCPATH/libcorrect" "$BUILDPATH/$toolchainname/libcorrect"
+    cd "$BUILDPATH/$toolchainname/libcorrect"
+    cp "$SRCPATH/android-cmake/android.toolchain.cmake" .
+    cmake -DCMAKE_TOOLCHAIN_FILE="./android.toolchain.cmake" -DANDROID_STANDALONE_TOOLCHAIN="$TOOLCHAINSPATH/$toolchainname" -DCMAKE_BUILD_TYPE=Release -DANDROID_SYSROOT="$SYSROOT" -DCMAKE_INSTALL_PREFIX="$SYSROOT/usr" -DANDROID_STL="c++_static" "$SRCPATH/libcorrect" && make && make shim && make install
 
     rm -rf "$BUILDPATH/$toolchainname/liquid-dsp"
     cp -LR "$SRCPATH/liquid-dsp" "$BUILDPATH/$toolchainname/liquid-dsp"
@@ -360,7 +358,7 @@ done
 
 mkdir -p "$LICENSEPATH"
 cp "$SRCPATH/libcomplex/COPYRIGHT" "$LICENSEPATH/libcomplex"
-cp "$SRCPATH/libfec/lesser.txt" "$LICENSEPATH/libfec"
+cp "$SRCPATH/libcorrect/LICENSE" "$LICENSEPATH/libcorrect"
 cp "$SRCPATH/liquid-dsp/LICENSE" "$LICENSEPATH/liquid-dsp"
 cp "$SRCPATH/jansson/LICENSE" "$LICENSEPATH/jansson"
 cp "$SRCPATH/quiet/LICENSE" "$LICENSEPATH/quiet"
